@@ -23,10 +23,8 @@
 #include "kernel/celltypes.h"
 #include "kernel/cellaigs.h"
 #include "kernel/log.h"
-#include "sexpresso.hpp"
+#include "sexpression.hpp"
 #include <string>
-
-using namespace sexpresso;
 
 USING_YOSYS_NAMESPACE
 PRIVATE_NAMESPACE_BEGIN
@@ -35,9 +33,6 @@ struct SexprWriter
 {
 	std::ostream &f;
 	bool use_selection;
-
-	Sexp top;
-	Sexp& cur;
 
 	Design *design;
 	Module *module;
@@ -48,7 +43,7 @@ struct SexprWriter
 	pool<Aig> aig_models;
 
 	SexprWriter(std::ostream &f, bool use_selection) :
-			f(f), use_selection(use_selection), cur(top) {}
+			f(f), use_selection(use_selection) {}
 
 	string get_string(string str)
 	{
@@ -294,11 +289,7 @@ struct SexprWriter
 		design = design_;
 		design->sort();
 
-		top.addChild("kicad_pcb");
-		cur = top.getChild(0);
-		auto version = Sexp("version") << "20221017";
-		auto generator = Sexp("generator") << "yosys";
-		cur << version << generator;
+		auto top = cons(token("kicad_pcb"), cons(cons(token("version"),20221018L
 
   #if 0
 		f << stringf("{\n");
@@ -344,7 +335,6 @@ struct SexprWriter
 		}
 		f << stringf("\n}\n");
 		#endif
-		f << top.toString();
 	}
 };
 

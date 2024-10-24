@@ -1,3 +1,5 @@
 
-OBJS += backends/sexpr/sexpr.o backends/sexpr/sexpresso.cpp
+OBJS += backends/sexpr/sexpr.o
 
+foo: backends/sexpr/test.o
+	$(CXX) -o backends/sexpr/foo -g backends/sexpr/test.o

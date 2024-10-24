@@ -1,0 +1,12 @@
+{
+	"configurations": [
+		{
+			"name": "foo",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceRoot}/backends/sexpr/foo",
+			"cwd": "${workspaceRoot}/backends/sexpr",
+			"MIMode": "gdb",
+		}
+	]
+}
