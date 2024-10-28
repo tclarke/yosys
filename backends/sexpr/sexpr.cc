@@ -26,6 +26,7 @@
 #include "sexpression.hpp"
 #include <string>
 
+using namespace sexpression;
 USING_YOSYS_NAMESPACE
 PRIVATE_NAMESPACE_BEGIN
 
@@ -289,7 +290,8 @@ struct SexprWriter
 		design = design_;
 		design->sort();
 
-		auto top = cons(token("kicad_pcb"), cons(cons(token("version"),20221018L
+		auto top = list(token("kicad_pcb"), list(token("version"), 20221018L), list(token("generator"), token("pcbnew")), cons(list(token("general"), list(token("thickness"), 1.6)), nil));
+                f << top;
 
   #if 0
 		f << stringf("{\n");

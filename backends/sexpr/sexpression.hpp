@@ -1,10 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <variant>
+
+namespace sexpression {
 
 // Used to denote that a string is really a token
 struct token {
@@ -33,7 +36,6 @@ public:
     consbox() noexcept : _item(nil) {}
     consbox(cons_box_item_type&& val, consboxp next) noexcept : _item(std::move(val)), _next(next) {}
 
-private:
     cons_box_item_type& car() noexcept { return _item; }
     consboxp cdr() noexcept { return _next; }
 
@@ -47,15 +49,10 @@ private:
         return buf.str();
     }
 
+private:
     cons_box_item_type _item;
     consboxp _next;
-
-
-    friend std::ostream& operator<<(std::ostream&, const consboxp);
-    friend std::ostream& operator<<(std::ostream&, const cons_box_item_type&);
-    friend consboxp cons(cons_box_item_type&&, consboxp);
-    friend cons_box_item_type car(consboxp);
-    friend consboxp cdr(consboxp);
+    friend consboxp list();
 };
 
 
@@ -90,5 +87,19 @@ consboxp cons(cons_box_item_type&& a, consboxp rest)
     return box;
 }
 
+template<typename H>
+consboxp list(H head)
+{
+    return cons(head, nil);
+}
+
+template<typename H, typename ... T>
+consboxp list(H head, T...tail)
+{
+    return cons(head, list(tail...));
+}
+
 cons_box_item_type car(consboxp b) { return b->car(); }
 consboxp cdr(consboxp b) { return b->cdr(); }
+
+}
