@@ -15,6 +15,8 @@ struct token {
     std::string value;
 };
 
+#define T(x__) token(#x__)
+
 class consbox;
 
 // Use nil for a null next pointer
@@ -23,7 +25,7 @@ std::shared_ptr<consbox> nil;
 
 // consbox pointer type and item type
 using consboxp = std::shared_ptr<consbox>;
-using cons_box_item_type = std::variant<niltype, token, long, double, std::string, consboxp>;
+using cons_box_item_type = std::variant<niltype, token, long, double, bool, std::string, consboxp>;
 
 // forward defs
 std::ostream& operator<<(std::ostream& s, const consboxp box);
@@ -53,6 +55,7 @@ private:
     cons_box_item_type _item;
     consboxp _next;
     friend consboxp list();
+    friend consboxp append(consboxp, consboxp);
 };
 
 
@@ -68,6 +71,8 @@ std::ostream& operator<<(std::ostream& s, const cons_box_item_type& item)
         s << *pval;
     else if (const double* pval = std::get_if<double>(&item))
         s << *pval;
+    else if (const bool* pval = std::get_if<bool>(&item))
+        s << (*pval ? "true" : "false");
     else if (const token* pval = std::get_if<token>(&item))
         s << pval->value;
     else if (const std::string* pval = std::get_if<std::string>(&item))
@@ -99,7 +104,21 @@ consboxp list(H head, T...tail)
     return cons(head, list(tail...));
 }
 
+consboxp append(consboxp a, consboxp b)
+{
+    consboxp rval = a;
+    while (a->_next != nullptr) a = a->_next;
+    a->_next = b;
+    return rval;
+}
+
 cons_box_item_type car(consboxp b) { return b->car(); }
 consboxp cdr(consboxp b) { return b->cdr(); }
+
+consboxp parse(std::istream& in)
+{
+    std::string token;
+    in >> std::ws >> token;
+}
 
 }

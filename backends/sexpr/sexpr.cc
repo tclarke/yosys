@@ -48,7 +48,7 @@ struct SexprWriter
 
 	string get_string(string str)
 	{
-		string newstr = "\"";
+		string newstr;
 		for (char c : str) {
 			if (c == '\\')
 				newstr += "\\\\";
@@ -69,7 +69,7 @@ struct SexprWriter
 			else
 				newstr += c;
 		}
-		return newstr + "\"";
+		return newstr;
 	}
 
 	string get_name(IdString name)
@@ -152,6 +152,104 @@ struct SexprWriter
 		if (module->has_processes()) {
 			log_error("Module %s contains processes, which are not supported by S-Expression backend (run `proc` first).\n", log_id(module));
 		}
+
+		// header info
+		auto mod_se = list(T(kicad_pcb),
+						   list(T(version), 20221018L),
+						   list(T(generator), token(get_string(yosys_version_str))));
+		
+		// general section
+		auto bt_str = module->get_string_attribute(ID(board_thickness));
+		double board_thickness = 1.6;
+		if (bt_str.empty()) {
+			log_warning("Module %s does not have a board_thickness, defaulting to 1.6\n", log_id(module));
+		} else {
+			board_thickness = atof(bt_str.c_str());
+		}
+		append(mod_se, cons(list(T(general), list(T(thickness), board_thickness)), nil));
+
+		// page section
+		auto paper_size = module->get_string_attribute(ID(paper_size));
+		if (paper_size.empty()) paper_size = "A4";
+		append(mod_se, cons(list(T(paper), paper_size), nil));
+
+		// layers section
+		constexpr struct {
+			int num;
+			const char* name;
+			const char* type;
+			const char* user_name;
+		} layers[] = {
+			{0, "F.Cu", "signal", nullptr},
+			{31, "B.Cu", "signal", nullptr},
+			{36, "B.SilkS", "user", "B.Silkscreen"},
+			{37, "F.SilkS", "user", "F.Silkscreen"},
+			{44, "Edge.Cuts", "user", nullptr},
+			{46, "B.CrtYd", "user", "B.Courtyard"},
+			{47, "F.CrtYd", "user", "F.Courtyard"},
+			{0, nullptr, nullptr, nullptr}
+		};
+		consboxp layers_se = cons(T(layers), nil);
+		for (int i = 0; layers[i].name != nullptr; ++i) {
+			consboxp layer = list(layers[i].num, layers[i].name, token(layers[i].type));
+			if (layers[i].user_name != nullptr) {
+				layer = append(layer, cons(layers[i].user_name, nil));
+			}
+			layers_se = append(layers_se, cons(layer, nil));
+		}
+		append(mod_se, cons(layers_se, nil));
+		
+		// setup section
+		auto setup_se = list(T(setup), cons(T(pad_to_mask_clearance), 0),
+			list(T(pcbplotparams),
+				list(T(layerselection), T(0x00010fc_ffffffff)),
+				list(T(plot_on_all_layers_selection), T(0x0000000_00000000)),
+				list(T(disableapertmacros), false),
+				list(T(usegerberextensions), false),
+				list(T(usegerberattributes), true),
+				list(T(usegerberadvancedattributes), true),
+				list(T(creategerberjobfile), true),
+				list(T(dashed_line_dash_ratio), 12.000000),
+				list(T(dashed_line_gap_ratio), 3.000000),
+				list(T(svgprecision), 4),
+				list(T(plotframeref), false),
+				list(T(viasonmask), false),
+				list(T(mode), 1),
+				list(T(useauxorigin), false),
+				list(T(hpglpennumber), 1),
+				list(T(hpglpenspeed), 20),
+				list(T(hpglpendiameter), 15.000000),
+				list(T(dxfpolygonmode), true),
+				list(T(dxfimperialunits), true),
+				list(T(dxfusepcbnewfont), true),
+				list(T(psnegative), false),
+				list(T(psa4output), false),
+				list(T(plotreference), true),
+				list(T(plotvalue), true),
+				list(T(plotinvisibletext), false),
+				list(T(sketchpadsonfab), false),
+				list(T(subtractmaskfromsilk), false),
+				list(T(outputformat), 1),
+				list(T(mirror), false),
+				list(T(drillshape), 1),
+				list(T(scaleselection), 1),
+				list(T(outputdirectory), "")));
+		append(mod_se, cons(setup_se, nil));
+
+		// nets section
+		/** TODO: Resolve duplicate wires */
+		int num = 0;
+		for (auto w : module->wires()) {
+			auto net = list(T(net), num++, get_name(w->name));
+			append(mod_se, cons(net, nil));
+		}
+
+		// footprints section
+
+		f << mod_se << std::endl;
+		
+		#if 0
+		f << mod_se << std::endl;
 
 		f << stringf("    %s: {\n", get_name(module->name).c_str());
 
@@ -283,6 +381,7 @@ struct SexprWriter
 		f << stringf("\n      }\n");
 
 		f << stringf("    }");
+		#endif
 	}
 
 	void write_design(Design *design_)
@@ -290,53 +389,20 @@ struct SexprWriter
 		design = design_;
 		design->sort();
 
-		auto top = list(token("kicad_pcb"), list(token("version"), 20221018L), list(token("generator"), token("pcbnew")), cons(list(token("general"), list(token("thickness"), 1.6)), nil));
-                f << top;
-
-  #if 0
-		f << stringf("{\n");
-		f << stringf("  \"creator\": %s,\n", get_string(yosys_version_str).c_str());
-		f << stringf("  \"modules\": {\n");
-		vector<Module*> modules = use_selection ? design->selected_modules() : design->modules();
-		bool first_module = true;
-		for (auto mod : modules) {
-			if (!first_module)
-				f << stringf(",\n");
-			write_module(mod);
-			first_module = false;
+		// use selected module/top module
+		Yosys::RTLIL::Module* top(nullptr);
+		design->selected_module(top);
+		if (top == nullptr) {
+			design->top_module();
 		}
-		f << stringf("\n  }");
-		if (!aig_models.empty()) {
-			f << stringf(",\n  \"models\": {\n");
-			bool first_model = true;
-			for (auto &aig : aig_models) {
-				if (!first_model)
-					f << stringf(",\n");
-				f << stringf("    \"%s\": [\n", aig.name.c_str());
-				int node_idx = 0;
-				for (auto &node : aig.nodes) {
-					if (node_idx != 0)
-						f << stringf(",\n");
-					f << stringf("      /* %3d */ [ ", node_idx);
-					if (node.portbit >= 0)
-						f << stringf("\"%sport\", \"%s\", %d", node.inverter ? "n" : "",
-								log_id(node.portname), node.portbit);
-					else if (node.left_parent < 0 && node.right_parent < 0)
-						f << stringf("\"%s\"", node.inverter ? "true" : "false");
-					else
-						f << stringf("\"%s\", %d, %d", node.inverter ? "nand" : "and", node.left_parent, node.right_parent);
-					for (auto &op : node.outports)
-						f << stringf(", \"%s\", %d", log_id(op.first), op.second);
-					f << stringf(" ]");
-					node_idx++;
-				}
-				f << stringf("\n    ]");
-				first_model = false;
-			}
-			f << stringf("\n  }");
+		if (top == nullptr) {
+			top = *(design->modules().begin());
 		}
-		f << stringf("\n}\n");
-		#endif
+		if (top == nullptr) {
+			log_error("No module selected.\n");
+			return;
+		}
+		write_module(top);
 	}
 };
 

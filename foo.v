@@ -1,3 +1,4 @@
+(* board_thickness="1.6" *)
 module foo;
 
 wire Vcc, Vdrive, GND;

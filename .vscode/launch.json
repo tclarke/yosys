@@ -7,6 +7,15 @@
 			"program": "${workspaceRoot}/backends/sexpr/foo",
 			"cwd": "${workspaceRoot}/backends/sexpr",
 			"MIMode": "gdb",
+		},
+		{
+			"name": "yosys",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceRoot}/yosys",
+			"args": ["-s", "foo.yosys"],
+			"cwd": "${workspaceRoot}",
+			"MIMode": "gdb",
 		}
 	]
 }

@@ -1,3 +1,3 @@
 read_verilog foo.v
-techmap -map lib.v
-sexpr
+techmap -map default_footprints.v
+dump

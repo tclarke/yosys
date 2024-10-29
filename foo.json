@@ -1,0 +1,85 @@
+{
+  "creator": "Yosys 0.46+124 (git sha1 d6d06b5dd, clang++ 13.0.1 -fPIC -O3)",
+  "modules": {
+    "foo": {
+      "attributes": {
+        "cells_not_processed": "00000000000000000000000000000001",
+        "src": "foo.v:1.1-8.10"
+      },
+      "ports": {
+      },
+      "cells": {
+        "c1.__cell": {
+          "hide_name": 0,
+          "type": "C_0805_2012Metric",
+          "parameters": {
+          },
+          "attributes": {
+            "footprint": "Capacitor_SMD:C_0805_2012Metric",
+            "layer": "F.Cu",
+            "module_not_derived": "00000000000000000000000000000001",
+            "reference": "REF**",
+            "src": "foo.v:6.20-6.35|lib.v:12.21-12.33",
+            "value": "10u"
+          },
+          "connections": {
+            "$1": [ 2 ],
+            "$2": [ 3 ]
+          }
+        },
+        "r1": {
+          "hide_name": 0,
+          "type": "R",
+          "parameters": {
+            "value": "100k"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "foo.v:5.21-5.36"
+          },
+          "connections": {
+            "$1": [ 4 ],
+            "$2": [ 2 ]
+          }
+        }
+      },
+      "netnames": {
+        "GND": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "foo.v:3.19-3.22"
+          }
+        },
+        "Vcc": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "foo.v:3.6-3.9"
+          }
+        },
+        "Vdrive": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "foo.v:3.11-3.17"
+          }
+        },
+        "c1.A": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "foo.v:6.20-6.35|lib.v:6.10-6.11"
+          }
+        },
+        "c1.B": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "foo.v:6.20-6.35|lib.v:6.19-6.20"
+          }
+        }
+      }
+    }
+  }
+}
